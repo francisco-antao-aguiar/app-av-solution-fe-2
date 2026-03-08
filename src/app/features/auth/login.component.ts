@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,7 +19,8 @@ export class LoginComponent {
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     // Redirect if already logged in
     if (this.authService.isAuthenticated()) {
@@ -50,8 +51,10 @@ export class LoginComponent {
           this.router.navigate(['/weekly-hours']);
         },
         error: (error) => {
-          this.error = error.message || 'Login failed';
+          this.error = error.message || 'Invalid username or password';
           this.loading = false;
+          this.cdr.markForCheck();
+          this.cdr.detectChanges();
         }
       });
   }

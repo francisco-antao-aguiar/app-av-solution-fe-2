@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { User, LoginRequest, LoginResponse } from '../models/user.model';
+import { catchError, map, tap } from 'rxjs/operators';
+import { User, LoginRequest, LoginResponseDto } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -30,45 +30,18 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  login(username: string, password: string): Observable<LoginResponse> {
-    // Mock login - in production, this would call the real API
-    const mockUser = this.mockUsers.find(
-      u => u.username === username && u.password === password
+  login(username: string, password: string): Observable<LoginResponseDto> {
+    return this.http.post<LoginResponseDto>(`/api/auth/login`, { username, password }).pipe(
+      tap(response => {
+        localStorage.setItem('currentUser', JSON.stringify(response.user));
+        this.currentUserSubject.next(response.user);
+      }),
+      catchError(map(() => {
+        throw new Error('Invalid username or password');}))
     );
-
-    if (mockUser) {
-      const token = 'mock-jwt-token-' + mockUser.id + '-' + Date.now();
-      const user: User = {
-        id: mockUser.id,
-        username: mockUser.username,
-        role: mockUser.role,
-        token: token
-      };
-
-      const response: LoginResponse = { token, user };
-
-      return of(response).pipe(
-        tap(response => {
-          localStorage.setItem('currentUser', JSON.stringify(response.user));
-          this.currentUserSubject.next(response.user);
-        })
-      );
-    }
-
-    return of(null).pipe(
+     return of(null).pipe(
       map(() => {
-        throw new Error('Invalid username or password');
-      })
-    );
-
-    // Real implementation would be:
-    // return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { username, password })
-    //   .pipe(
-    //     tap(response => {
-    //       localStorage.setItem('currentUser', JSON.stringify(response.user));
-    //       this.currentUserSubject.next(response.user);
-    //     })
-    //   );
+        throw new Error('Invalid username or password');}));
   }
 
   logout(): void {
