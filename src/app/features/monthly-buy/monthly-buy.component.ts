@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WorkerService } from '../../core/services/worker.service';
@@ -22,7 +22,10 @@ export class MonthlyBuyComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor(private workerService: WorkerService) {}
+  constructor(
+    private workerService: WorkerService,
+    private cdr: ChangeDetectorRef, // <-- inject ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.setCurrentPeriod();
@@ -34,7 +37,6 @@ export class MonthlyBuyComponent implements OnInit {
     let year = today.getFullYear();
     let month = today.getMonth();
 
-    // If today is before the 21st, go to previous month's period
     if (today.getDate() < 21) {
       month--;
       if (month < 0) {
@@ -43,23 +45,18 @@ export class MonthlyBuyComponent implements OnInit {
       }
     }
 
-    // Format as YYYY-MM for month picker
     this.selectedMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
     this.calculatePeriod();
   }
 
   calculatePeriod(): void {
     const [year, month] = this.selectedMonth.split('-').map(Number);
-
-    // Start date: 21st of selected month
     const start = new Date(year, month - 1, 21);
     this.startDate = start.toISOString().split('T')[0];
 
-    // End date: 20th of next month
     const end = new Date(year, month, 20);
     this.endDate = end.toISOString().split('T')[0];
 
-    // Calculate date headers
     this.dateHeaders = [];
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const day = d.getDate();
@@ -79,16 +76,18 @@ export class MonthlyBuyComponent implements OnInit {
       next: (data) => {
         this.monthlyData = data;
         this.loading = false;
+        this.cdr.detectChanges(); // <-- ensure DOM updates after fetching data
       },
       error: (error) => {
         console.error('Error loading monthly buy data:', error);
         this.loading = false;
+        this.cdr.detectChanges();
       },
     });
   }
 
   sort(column: keyof MonthlyBuyRow): void {
-    if (column === 'dailyHours') return; // Can't sort array column
+    if (column === 'dailyHours') return;
 
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -119,7 +118,6 @@ export class MonthlyBuyComponent implements OnInit {
         'Buy Price': row.buyPrice,
       };
 
-      // Add daily hours columns
       row.dailyHours.forEach((hours, index) => {
         data[this.dateHeaders[index]] = hours === null ? 'X' : hours;
       });

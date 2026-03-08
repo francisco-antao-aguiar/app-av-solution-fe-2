@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WorkerService } from '../../core/services/worker.service';
@@ -22,7 +22,10 @@ export class MonthlyProfitComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor(private workerService: WorkerService) {}
+  constructor(
+    private workerService: WorkerService,
+    private cdr: ChangeDetectorRef, // <-- Inject ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.setCurrentPeriod();
@@ -48,7 +51,6 @@ export class MonthlyProfitComponent implements OnInit {
 
   calculatePeriod(): void {
     const [year, month] = this.selectedMonth.split('-').map(Number);
-
     const start = new Date(year, month - 1, 21);
     this.startDate = start.toISOString().split('T')[0];
 
@@ -74,10 +76,12 @@ export class MonthlyProfitComponent implements OnInit {
       next: (data) => {
         this.monthlyData = data;
         this.loading = false;
+        this.cdr.detectChanges(); // <-- ensure DOM updates after data fetch
       },
       error: (error) => {
         console.error('Error loading monthly profit data:', error);
         this.loading = false;
+        this.cdr.detectChanges();
       },
     });
   }
