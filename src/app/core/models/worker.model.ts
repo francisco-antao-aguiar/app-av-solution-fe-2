@@ -1,31 +1,20 @@
 export interface Worker {
-  id: number;
+  id: string;
   category: string;
   name: string;
-  buyPricePerHour: number;
-  sellPricePerHour: number;
-}
-
-export interface WeekDay {
-  name: string;
-  date: Date;
-  dayOfWeek: number;
-}
-
-export interface WorkerHoursData {
-  workerId: number;
-  workerName: string;
-  hours: { [key: string]: number }; // key: date string, value: hours
+  buyPrice: number;
+  sellPrice: number;
 }
 
 export interface WorkingHours {
-  workerId: number;
-  date: string; // ISO date format
+  id?: string;
+  workerId: string;
+  date: string;
   hours: number;
 }
 
 export interface WeeklyHoursRow {
-  workerId: number;
+  workerId: string;
   category: string;
   name: string;
   monday: number;
@@ -39,17 +28,35 @@ export interface WeeklyHoursRow {
 }
 
 export interface MonthlyBuyRow {
-  workerId: number;
+  workerId: string;
   category: string;
   name: string;
   buyPrice: number;
-  dailyHours: (number | null)[]; // null means "X" (did not work)
+  dailyHours: (number | null)[];
   totalHours: number;
   totalBuyCost: number;
 }
 
-export interface MonthlyProfitRow extends MonthlyBuyRow {
+export interface MonthlyProfitRow {
+  workerId: string;
+  category: string;
+  name: string;
+  buyPrice: number;
   sellPrice: number;
+  dailyHours: (number | null)[];
+  totalHours: number;
+  totalBuyCost: number;
   totalSellPrice: number;
   profit: number;
+}
+export interface WeekDay {
+  name: string;
+  date: Date;
+  dayOfWeek: number;
+}
+
+export interface WorkerHoursData {
+  workerId: string;
+  workerName: string;
+  hours: { [key: string]: number }; // key: date string, value: hours
 }

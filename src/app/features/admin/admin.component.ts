@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WorkerService } from '../../core/services/worker.service';
-import { WeekDay, Worker, WorkerHoursData } from '../../core/models/worker.model';
+import { WeekDay, Worker } from '../../core/models/worker.model';
+import { WorkingHoursService } from '../../core/services/working-hours.service';
 
 @Component({
   selector: 'app-admin',
@@ -16,7 +17,7 @@ export class AdminComponent implements OnInit {
   workerForm: FormGroup;
   hoursForm: FormGroup;
   loading = false;
-  editingWorkerId: number | null = null;
+  editingWorkerId: string | null = null;
   showWorkerForm = false;
   showHoursForm = false;
   successMessage = '';
@@ -26,18 +27,19 @@ export class AdminComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private workerService: WorkerService,
+    private workingHoursService: WorkingHoursService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.workerForm = this.formBuilder.group({
       category: ['', Validators.required],
       name: ['', Validators.required],
-      buyPricePerHour: ['', [Validators.required, Validators.min(0)]],
-      sellPricePerHour: ['', [Validators.required, Validators.min(0)]],
+      buyPrice: ['', [Validators.required, Validators.min(0)]],
+      sellPrice: ['', [Validators.required, Validators.min(0)]],
     });
 
     this.hoursForm = this.formBuilder.group({
-      workerId: ['', Validators.required],
-      date: ['', Validators.required],
-      hours: ['', [Validators.required, Validators.min(0), Validators.max(24)]],
+      selectedWeek: ['', Validators.required],
+      workersHours: this.formBuilder.array([]),
     });
   }
 
@@ -53,11 +55,9 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
     this.loadWorkers();
     this.setTodayDate();
-    this.initializeHoursForm();
     this.setCurrentWeek();
   }
 
-  // Worker Management
   toggleWorkerForm(): void {
     this.showWorkerForm = !this.showWorkerForm;
     if (!this.showWorkerForm) {
@@ -67,14 +67,22 @@ export class AdminComponent implements OnInit {
 
   loadWorkers(): void {
     this.loading = true;
+
     this.workerService.getAllWorkers().subscribe({
       next: (workers) => {
         this.workers = workers;
         this.loading = false;
+
+        if (this.showHoursForm) {
+          this.buildWorkersHoursArray();
+        }
+
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading workers:', error);
         this.loading = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -88,40 +96,41 @@ export class AdminComponent implements OnInit {
   editWorker(worker: Worker): void {
     this.editingWorkerId = worker.id;
     this.showWorkerForm = true;
+
     this.workerForm.patchValue({
       category: worker.category,
       name: worker.name,
-      buyPricePerHour: worker.buyPricePerHour,
-      sellPricePerHour: worker.sellPricePerHour,
+      buyPrice: worker.buyPrice,
+      sellPrice: worker.sellPrice,
     });
+
+    this.cdr.detectChanges();
   }
 
   saveWorker(): void {
-    if (this.workerForm.invalid) {
-      return;
-    }
+    if (this.workerForm.invalid) return;
 
     const workerData = this.workerForm.value;
 
     if (this.editingWorkerId !== null) {
-      // Update existing worker
       this.workerService.updateWorker(this.editingWorkerId, workerData).subscribe({
         next: () => {
           this.showSuccess('Worker updated successfully');
           this.loadWorkers();
           this.cancelWorkerEdit();
+          this.cdr.detectChanges();
         },
         error: (error) => {
           this.showError('Failed to update worker: ' + error.message);
         },
       });
     } else {
-      // Create new worker
       this.workerService.createWorker(workerData).subscribe({
         next: () => {
           this.showSuccess('Worker created successfully');
           this.loadWorkers();
           this.cancelWorkerEdit();
+          this.cdr.detectChanges();
         },
         error: (error) => {
           this.showError('Failed to create worker: ' + error.message);
@@ -130,12 +139,13 @@ export class AdminComponent implements OnInit {
     }
   }
 
-  deleteWorker(id: number): void {
+  deleteWorker(id: string): void {
     if (confirm('Are you sure you want to delete this worker?')) {
       this.workerService.deleteWorker(id).subscribe({
         next: () => {
           this.showSuccess('Worker deleted successfully');
           this.loadWorkers();
+          this.cdr.detectChanges();
         },
         error: (error) => {
           this.showError('Failed to delete worker: ' + error.message);
@@ -144,16 +154,9 @@ export class AdminComponent implements OnInit {
     }
   }
 
-  getWorkerName(workerId: number): string {
+  getWorkerName(workerId: string): string {
     const worker = this.workers.find((w) => w.id === workerId);
     return worker ? worker.name : 'Unknown';
-  }
-
-  initializeHoursForm(): void {
-    this.hoursForm = this.formBuilder.group({
-      selectedWeek: ['', Validators.required],
-      workersHours: this.formBuilder.array([]),
-    });
   }
 
   setCurrentWeek(): void {
@@ -170,11 +173,10 @@ export class AdminComponent implements OnInit {
   }
 
   getWeekNumber(date: Date): number {
-    // ISO 8601 week number calculation
     const target = new Date(date.valueOf());
-    const dayNumber = (date.getDay() + 6) % 7; // Monday = 0, Sunday = 6
-    target.setDate(target.getDate() - dayNumber + 3); // Thursday of the current week
-    const firstThursday = new Date(target.getFullYear(), 0, 4); // January 4th is always in week 1
+    const dayNumber = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNumber + 3);
+    const firstThursday = new Date(target.getFullYear(), 0, 4);
     const diff = target.getTime() - firstThursday.getTime();
     const oneWeek = 7 * 24 * 60 * 60 * 1000;
     return 1 + Math.round(diff / oneWeek);
@@ -193,7 +195,6 @@ export class AdminComponent implements OnInit {
     const monday = this.getDateFromWeek(year, week);
 
     const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
-
     this.weekDays = [];
 
     for (let i = 0; i < 7; i++) {
@@ -203,15 +204,17 @@ export class AdminComponent implements OnInit {
       this.weekDays.push({
         name: dayNames[i],
         date: currentDay,
-        dayOfWeek: i + 1, // 1 = Monday, 7 = Sunday
+        dayOfWeek: i + 1,
       });
     }
+
+    this.cdr.detectChanges();
   }
 
   buildWorkersHoursArray(): void {
     this.workersHoursArray.clear();
 
-    this.workers.forEach((worker, index) => {
+    this.workers.forEach((worker) => {
       const workerGroup = this.formBuilder.group({
         workerId: [worker.id],
         day0: [0, [Validators.min(0), Validators.max(24)]],
@@ -225,6 +228,8 @@ export class AdminComponent implements OnInit {
 
       this.workersHoursArray.push(workerGroup);
     });
+
+    this.cdr.detectChanges();
   }
 
   previousWeek(): void {
@@ -254,24 +259,17 @@ export class AdminComponent implements OnInit {
   }
 
   getDateFromWeek(year: number, week: number): Date {
-    // Start from Jan 4th (ISO week 1 reference)
     const jan4 = new Date(year, 0, 4);
-
-    // Get Monday of week 1
-    const dayOfWeek = jan4.getDay() || 7; // Sunday = 0 -> 7
+    const dayOfWeek = jan4.getDay() || 7;
     const mondayOfWeek1 = new Date(jan4);
     mondayOfWeek1.setDate(jan4.getDate() - dayOfWeek + 1);
-
-    // Add (week - 1) weeks to get target Monday
     const targetMonday = new Date(mondayOfWeek1);
     targetMonday.setDate(mondayOfWeek1.getDate() + (week - 1) * 7);
-
     return targetMonday;
   }
 
   getWeekRangeDisplay(): string {
     if (this.weekDays.length === 0) return '';
-
     const firstDay = this.weekDays[0].date;
     const lastDay = this.weekDays[6].date;
 
@@ -291,7 +289,7 @@ export class AdminComponent implements OnInit {
       total += parseFloat(dayValue || 0);
     }
 
-    return Math.round(total * 10) / 10; // Round to 1 decimal place
+    return Math.round(total * 10) / 10;
   }
 
   getDayTotal(dayIndex: number): number {
@@ -328,50 +326,50 @@ export class AdminComponent implements OnInit {
 
   toggleHoursForm(): void {
     this.showHoursForm = !this.showHoursForm;
+
     if (this.showHoursForm) {
       this.setCurrentWeek();
     } else {
       this.hoursForm.reset();
     }
+
+    this.cdr.detectChanges();
   }
 
   saveHours(): void {
     if (this.hoursForm.valid) {
-      const formData = this.hoursForm.value;
-      const workersHoursData: WorkerHoursData[] = [];
+      const payload = this.hoursForm.value.workersHours.flatMap(
+        (workerHours: any, workerIndex: number) => {
+          const workerId = this.workers[workerIndex].id;
 
-      formData.workersHours.forEach((workerHours: any, index: number) => {
-        const worker = this.workers[index];
-        const hours: { [key: string]: number } = {};
+          return this.weekDays
+            .map((day, dayIndex) => {
+              const hours = Number(workerHours[`day${dayIndex}`]);
 
-        for (let i = 0; i < 7; i++) {
-          const dayValue = workerHours[`day${i}`];
-          if (dayValue && dayValue > 0) {
-            const dateStr = this.weekDays[i].date.toISOString().split('T')[0];
-            hours[dateStr] = parseFloat(dayValue);
-          }
-        }
+              if (!hours || hours <= 0) return null;
 
-        if (Object.keys(hours).length > 0) {
-          workersHoursData.push({
-            workerId: worker.id,
-            workerName: worker.name,
-            hours: hours,
-          });
-        }
+              return {
+                date: day.date.toISOString().split('T')[0],
+                hours: hours,
+                worker: { id: workerId },
+              };
+            })
+            .filter(Boolean);
+        },
+      );
+      this.workingHoursService.createWorkingHours(payload).subscribe({
+        next: () => {
+          console.log('Hours saved');
+        },
+        error: (err) => {
+          console.error('Error saving hours', err);
+        },
       });
-
-      console.log('Saving hours data:', workersHoursData);
-
-      // Aqui você implementa a lógica para salvar os dados
-      // Exemplo: this.hoursService.saveWeeklyHours(workersHoursData).subscribe(...)
-
-      // Após salvar com sucesso:
       this.toggleHoursForm();
+      this.cdr.detectChanges();
     }
   }
 
-  // Utility methods
   private showSuccess(message: string): void {
     this.successMessage = message;
     this.errorMessage = '';
@@ -384,3 +382,4 @@ export class AdminComponent implements OnInit {
     setTimeout(() => (this.errorMessage = ''), 5000);
   }
 }
+
