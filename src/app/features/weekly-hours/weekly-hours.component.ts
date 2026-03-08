@@ -10,7 +10,7 @@ import { CsvExportService } from '../../core/services/csv-export.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './weekly-hours.component.html',
-  styleUrls: ['./weekly-hours.component.css']
+  styleUrls: ['./weekly-hours.component.css'],
 })
 export class WeeklyHoursComponent implements OnInit {
   weeklyData: WeeklyHoursRow[] = [];
@@ -49,7 +49,7 @@ export class WeeklyHoursComponent implements OnInit {
       error: (error) => {
         console.error('Error loading weekly hours:', error);
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -64,21 +64,19 @@ export class WeeklyHoursComponent implements OnInit {
     this.weeklyData.sort((a, b) => {
       const aVal = a[column];
       const bVal = b[column];
-      
+
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
+
       const aStr = String(aVal);
       const bStr = String(bVal);
-      return this.sortDirection === 'asc' 
-        ? aStr.localeCompare(bStr)
-        : bStr.localeCompare(aStr);
+      return this.sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
     });
   }
 
   exportToCsv(): void {
-    const exportData = this.weeklyData.map(row => ({
+    const exportData = this.weeklyData.map((row) => ({
       Category: row.category,
       Name: row.name,
       Monday: row.monday,
@@ -88,25 +86,35 @@ export class WeeklyHoursComponent implements OnInit {
       Friday: row.friday,
       Saturday: row.saturday,
       Sunday: row.sunday,
-      'Total Hours': row.totalHours
+      'Total Hours': row.totalHours,
     }));
 
-    CsvExportService.exportToCsv(
-      `weekly-hours-${this.selectedWeekStart}.csv`,
-      exportData
-    );
+    CsvExportService.exportToCsv(`weekly-hours-${this.selectedWeekStart}.csv`, exportData);
   }
 
   getWeekDateRange(): string {
     const start = new Date(this.selectedWeekStart);
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
-    
+
     return `${this.formatDate(start)} - ${this.formatDate(end)}`;
   }
 
   private formatDate(date: Date): string {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   }
 

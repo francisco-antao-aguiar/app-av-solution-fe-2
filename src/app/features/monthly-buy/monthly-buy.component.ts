@@ -10,7 +10,7 @@ import { CsvExportService } from '../../core/services/csv-export.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './monthly-buy.component.html',
-  styleUrls: ['./monthly-buy.component.css']
+  styleUrls: ['./monthly-buy.component.css'],
 })
 export class MonthlyBuyComponent implements OnInit {
   monthlyData: MonthlyBuyRow[] = [];
@@ -50,7 +50,7 @@ export class MonthlyBuyComponent implements OnInit {
 
   calculatePeriod(): void {
     const [year, month] = this.selectedMonth.split('-').map(Number);
-    
+
     // Start date: 21st of selected month
     const start = new Date(year, month - 1, 21);
     this.startDate = start.toISOString().split('T')[0];
@@ -83,7 +83,7 @@ export class MonthlyBuyComponent implements OnInit {
       error: (error) => {
         console.error('Error loading monthly buy data:', error);
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -100,25 +100,23 @@ export class MonthlyBuyComponent implements OnInit {
     this.monthlyData.sort((a, b) => {
       const aVal = a[column];
       const bVal = b[column];
-      
+
       if (typeof aVal === 'number' && typeof bVal === 'number') {
         return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
       }
-      
+
       const aStr = String(aVal);
       const bStr = String(bVal);
-      return this.sortDirection === 'asc' 
-        ? aStr.localeCompare(bStr)
-        : bStr.localeCompare(aStr);
+      return this.sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
     });
   }
 
   exportToCsv(): void {
-    const exportData = this.monthlyData.map(row => {
+    const exportData = this.monthlyData.map((row) => {
       const data: any = {
         Category: row.category,
         Name: row.name,
-        'Buy Price': row.buyPrice
+        'Buy Price': row.buyPrice,
       };
 
       // Add daily hours columns
@@ -134,7 +132,7 @@ export class MonthlyBuyComponent implements OnInit {
 
     CsvExportService.exportToCsv(
       `monthly-buy-${this.startDate}-to-${this.endDate}.csv`,
-      exportData
+      exportData,
     );
   }
 
@@ -145,7 +143,20 @@ export class MonthlyBuyComponent implements OnInit {
   }
 
   private formatDate(date: Date): string {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abril',
+      'Maio',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
   }
 

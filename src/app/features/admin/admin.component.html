@@ -91,7 +91,7 @@
             />
           </div>
         </div>
-        
+
         <div class="flex space-x-3">
           <button
             type="submit"
@@ -152,7 +152,7 @@
           </tr>
         </tbody>
       </table>
-      
+
       <div *ngIf="workers.length === 0" class="text-center py-12">
         <svg class="mx-auto h-12 w-12 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -174,67 +174,168 @@
         <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg>
-        Add Hours
+        {{ showHoursForm ? 'Close' : 'Add Hours' }}
       </button>
     </div>
 
     <!-- Hours Form -->
     <div *ngIf="showHoursForm" class="px-6 py-6">
-      <form [formGroup]="hoursForm" (ngSubmit)="saveHours()" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Worker</label>
-            <select
-              formControlName="workerId"
-              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-            >
-              <option value="">Select worker</option>
-              <option *ngFor="let worker of workers" [value]="worker.id">{{ worker.name }} ({{ worker.category }})</option>
-            </select>
+      <form (ngSubmit)="saveHours()" [formGroup]="hoursForm" class="space-y-6">
+
+        <!-- Week Picker -->
+        <div class="flex items-center space-x-4 pb-4 border-b border-secondary-200">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-secondary-700 mb-2">Select Week</label>
+            <div class="flex items-center space-x-2">
+              <button
+                (click)="previousWeek()"
+                class="p-2 border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-all"
+                type="button"
+              >
+                <svg class="h-5 w-5 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+              </button>
+
+              <input
+                (change)="onWeekChange()"
+                class="flex-1 px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                formControlName="selectedWeek"
+                type="week"
+              />
+
+              <button
+                (click)="nextWeek()"
+                class="p-2 border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-all"
+                type="button"
+              >
+                <svg class="h-5 w-5 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+              </button>
+
+              <button
+                (click)="goToCurrentWeek()"
+                class="px-3 py-2 border border-secondary-300 rounded-lg text-sm font-medium text-secondary-700 hover:bg-secondary-50 transition-all"
+                type="button"
+              >
+                Today
+              </button>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Date</label>
-            <input
-              type="date"
-              formControlName="date"
-              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-secondary-700 mb-1">Hours</label>
-            <input
-              type="number"
-              formControlName="hours"
-              placeholder="0"
-              step="0.5"
-              min="0"
-              max="24"
-              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-            />
+
+          <div class="text-sm text-secondary-600">
+            <div class="font-medium">{{ getWeekRangeDisplay() }}</div>
           </div>
         </div>
-        
-        <div class="flex space-x-3">
-          <button
-            type="submit"
-            [disabled]="hoursForm.invalid"
-            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-success-600 hover:bg-success-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            Save Hours
-          </button>
-          <button
-            type="button"
-            (click)="toggleHoursForm()"
-            class="px-4 py-2 border border-secondary-300 rounded-lg shadow-sm text-sm font-medium text-secondary-700 bg-white hover:bg-secondary-50 transition-all"
-          >
-            Cancel
-          </button>
+
+        <!-- Weekly Hours Grid -->
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+            <tr class="bg-secondary-50">
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold text-secondary-700 border border-secondary-200 sticky left-0 bg-secondary-50 z-10">
+                Worker
+              </th>
+              <th
+                *ngFor="let day of weekDays; let i = index"
+                class="px-3 py-3 text-center text-xs font-semibold text-secondary-700 border border-secondary-200 min-w-[100px]"
+              >
+                <div>{{ day.name }}</div>
+                <div class="text-xs font-normal text-secondary-500 mt-1">{{ day.date | date:'dd/MM' }}</div>
+              </th>
+              <th
+                class="px-4 py-3 text-center text-xs font-semibold text-secondary-700 border border-secondary-200 bg-secondary-100 min-w-[100px]">
+                Total
+              </th>
+            </tr>
+            </thead>
+            <tbody formArrayName="workersHours">
+            <tr
+              *ngFor="let workerControl of workersHoursArray.controls; let workerIndex = index"
+              [formGroupName]="workerIndex"
+              class="hover:bg-secondary-50 transition-colors"
+            >
+              <td
+                class="px-4 py-3 text-sm font-medium text-secondary-900 border border-secondary-200 sticky left-0 bg-white z-10">
+                <div>{{ workers[workerIndex].name }}</div>
+                <div class="text-xs text-secondary-500">{{ workers[workerIndex].category }}</div>
+              </td>
+              <td
+                *ngFor="let day of weekDays; let dayIndex = index"
+                class="px-2 py-2 border border-secondary-200"
+              >
+                <input
+                  [formControlName]="'day' + dayIndex"
+                  class="w-full px-2 py-1.5 text-center border border-secondary-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                  max="24"
+                  min="0"
+                  placeholder="0"
+                  step="0.5"
+                  type="number"
+                />
+              </td>
+              <td
+                class="px-4 py-3 text-center text-sm font-semibold text-secondary-900 border border-secondary-200 bg-secondary-50">
+                {{ getWorkerWeekTotal(workerIndex) }}h
+              </td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr class="bg-secondary-100 font-semibold">
+              <td
+                class="px-4 py-3 text-sm text-secondary-900 border border-secondary-200 sticky left-0 bg-secondary-100 z-10">
+                Daily Total
+              </td>
+              <td
+                *ngFor="let day of weekDays; let dayIndex = index"
+                class="px-4 py-3 text-center text-sm text-secondary-900 border border-secondary-200"
+              >
+                {{ getDayTotal(dayIndex) }}h
+              </td>
+              <td class="px-4 py-3 text-center text-sm text-primary-600 border border-secondary-200 bg-primary-50">
+                {{ getGrandTotal() }}h
+              </td>
+            </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-between items-center pt-4 border-t border-secondary-200">
+          <div class="text-sm text-secondary-600">
+          </div>
+
+          <div class="flex space-x-3">
+            <button
+              (click)="clearAllHours()"
+              class="px-4 py-2 border border-secondary-300 rounded-lg shadow-sm text-sm font-medium text-secondary-700 bg-white hover:bg-secondary-50 transition-all"
+              type="button"
+            >
+              Clear All
+            </button>
+            <button
+              (click)="toggleHoursForm()"
+              class="px-4 py-2 border border-secondary-300 rounded-lg shadow-sm text-sm font-medium text-secondary-700 bg-white hover:bg-secondary-50 transition-all"
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              class="px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-success-600 hover:bg-success-700 transition-all"
+              type="submit"
+            >
+              Save Hours
+            </button>
+          </div>
         </div>
       </form>
     </div>
 
     <div *ngIf="!showHoursForm" class="px-6 py-6">
-      <p class="text-sm text-secondary-600">Click "Add Hours" to register working hours for a worker on a specific date.</p>
+      <p class="text-sm text-secondary-600">Click "Add Hours" to register working hours for all workers for the selected
+        week.</p>
     </div>
   </div>
 </div>

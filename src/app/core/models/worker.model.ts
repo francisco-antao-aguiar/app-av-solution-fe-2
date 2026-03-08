@@ -6,6 +6,18 @@ export interface Worker {
   sellPricePerHour: number;
 }
 
+export interface WeekDay {
+  name: string;
+  date: Date;
+  dayOfWeek: number;
+}
+
+export interface WorkerHoursData {
+  workerId: number;
+  workerName: string;
+  hours: { [key: string]: number }; // key: date string, value: hours
+}
+
 export interface WorkingHours {
   workerId: number;
   date: string; // ISO date format
