@@ -21,14 +21,14 @@
               routerLinkActive="bg-primary-100 text-primary-700"
               class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-700 hover:bg-secondary-100 transition-all"
             >
-              Weekly Hours
+              Vista Semanal
             </a>
             <a
               routerLink="/monthly-buy"
               routerLinkActive="bg-primary-100 text-primary-700"
               class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-700 hover:bg-secondary-100 transition-all"
             >
-              Monthly Buy
+              Vista Mensal
             </a>
             <a
               *ngIf="isAdmin()"
@@ -36,7 +36,7 @@
               routerLinkActive="bg-primary-100 text-primary-700"
               class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-700 hover:bg-secondary-100 transition-all"
             >
-              Monthly Profit
+              Vista de Contas Mensal
             </a>
             <a
               *ngIf="isAdmin()"
@@ -149,7 +149,7 @@
   </nav>
 
   <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <main class="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <router-outlet></router-outlet>
   </main>
 </div>
