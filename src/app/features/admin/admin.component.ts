@@ -284,7 +284,7 @@ export class AdminComponent implements OnInit {
         return this.weekDays
           .map((day, dayIndex) => {
             const hours = Number(workerHours[`day${dayIndex}`]);
-            if (!hours || hours <= 0) return null;
+            if (hours == null || hours == undefined || hours < 0) return null;
             return { date: day.date.toISOString().split('T')[0], hours, worker: { id: workerId } };
           })
           .filter(Boolean);
