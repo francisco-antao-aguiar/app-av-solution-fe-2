@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WorkerService } from '../../core/services/worker.service';
@@ -20,7 +20,10 @@ export class WeeklyHoursComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
-  constructor(private workerService: WorkerService) {}
+  constructor(
+    private workerService: WorkerService,
+    private cdr: ChangeDetectorRef, // <-- inject ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.setCurrentWeek();
@@ -47,19 +50,20 @@ export class WeeklyHoursComponent implements OnInit {
     return d;
   }
 
-  private isoWeekString(date: Date): string {
-    const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const day = (tmp.getUTCDay() + 6) % 7;
-    tmp.setUTCDate(tmp.getUTCDate() - day + 3); // Thursday
-    const weekYear = tmp.getUTCFullYear();
-
-    const firstThursday = new Date(Date.UTC(weekYear, 0, 4));
-    const firstDay = (firstThursday.getUTCDay() + 6) % 7;
-    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
-
-    const week = 1 + Math.round((tmp.valueOf() - firstThursday.valueOf()) / (7 * 24 * 60 * 60 * 1000));
-
-    return `${weekYear}-W${String(week).padStart(2, '0')}`;
+  loadData(): void {
+    this.loading = true;
+    this.workerService.getWeeklyHours(this.selectedWeekStart).subscribe({
+      next: (data) => {
+        this.weeklyData = data;
+        this.loading = false;
+        this.cdr.detectChanges(); // <-- ensure DOM updates after fetching data
+      },
+      error: (error) => {
+        console.error('Error loading weekly hours:', error);
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private isoWeekStringToMonday(weekString: string): Date {
@@ -77,18 +81,20 @@ export class WeeklyHoursComponent implements OnInit {
     return monday;
   }
 
-  loadData(): void {
-    this.loading = true;
-    this.workerService.getWeeklyHours(this.selectedWeekStart).subscribe({
-      next: (data) => {
-        this.weeklyData = data;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading weekly hours:', error);
-        this.loading = false;
-      },
-    });
+  private isoWeekString(date: Date): string {
+    const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = (tmp.getUTCDay() + 6) % 7;
+    tmp.setUTCDate(tmp.getUTCDate() - day + 3); // Thursday
+    const weekYear = tmp.getUTCFullYear();
+
+    const firstThursday = new Date(Date.UTC(weekYear, 0, 4));
+    const firstDay = (firstThursday.getUTCDay() + 6) % 7;
+    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
+
+    const week =
+      1 + Math.round((tmp.valueOf() - firstThursday.valueOf()) / (7 * 24 * 60 * 60 * 1000));
+
+    return `${weekYear}-W${String(week).padStart(2, '0')}`;
   }
 
   sort(column: keyof WeeklyHoursRow): void {
