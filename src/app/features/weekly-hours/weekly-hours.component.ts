@@ -16,6 +16,7 @@ export class WeeklyHoursComponent implements OnInit {
   weeklyData: WeeklyHoursRow[] = [];
   loading = false;
   selectedWeekStart: string = '';
+  weekPickerValue: string = '';
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
@@ -28,15 +29,52 @@ export class WeeklyHoursComponent implements OnInit {
 
   setCurrentWeek(): void {
     const today = new Date();
-    const monday = new Date(today);
-    const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-    monday.setDate(diff);
-    this.selectedWeekStart = monday.toISOString().split('T')[0];
+    const monday = this.getMondayOfWeek(today);
+    this.selectedWeekStart = this.formatDate(monday);
+    this.weekPickerValue = this.isoWeekString(monday);
   }
 
   onWeekChange(): void {
+    const monday = this.isoWeekStringToMonday(this.weekPickerValue);
+    this.selectedWeekStart = this.formatDate(monday);
     this.loadData();
+  }
+
+  private getMondayOfWeek(date: Date): Date {
+    const d = new Date(date);
+    const day = (d.getDay() + 6) % 7; // Monday=0, Sunday=6
+    d.setDate(d.getDate() - day);
+    return d;
+  }
+
+  private isoWeekString(date: Date): string {
+    const tmp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const day = (tmp.getUTCDay() + 6) % 7;
+    tmp.setUTCDate(tmp.getUTCDate() - day + 3); // Thursday
+    const weekYear = tmp.getUTCFullYear();
+
+    const firstThursday = new Date(Date.UTC(weekYear, 0, 4));
+    const firstDay = (firstThursday.getUTCDay() + 6) % 7;
+    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDay + 3);
+
+    const week = 1 + Math.round((tmp.valueOf() - firstThursday.valueOf()) / (7 * 24 * 60 * 60 * 1000));
+
+    return `${weekYear}-W${String(week).padStart(2, '0')}`;
+  }
+
+  private isoWeekStringToMonday(weekString: string): Date {
+    const [yearPart, weekPart] = weekString.split('-W');
+    const year = Number(yearPart);
+    const week = Number(weekPart);
+
+    const jan4 = new Date(Date.UTC(year, 0, 4));
+    const dayOfWeek = (jan4.getUTCDay() + 6) % 7; // Monday=0
+    const firstMonday = new Date(jan4);
+    firstMonday.setUTCDate(jan4.getUTCDate() - dayOfWeek);
+
+    const monday = new Date(firstMonday);
+    monday.setUTCDate(firstMonday.getUTCDate() + (week - 1) * 7);
+    return monday;
   }
 
   loadData(): void {
