@@ -47,36 +47,23 @@ export class AdminComponent implements OnInit {
     return this.hoursForm.get('workersHours') as FormArray;
   }
 
-  setTodayDate(): void {
-    const today = new Date().toISOString().split('T')[0];
-    this.hoursForm.patchValue({ date: today });
-  }
-
   ngOnInit(): void {
     this.loadWorkers();
-    this.setTodayDate();
     this.setCurrentWeek();
   }
 
   toggleWorkerForm(): void {
     this.showWorkerForm = !this.showWorkerForm;
-    if (!this.showWorkerForm) {
-      this.cancelWorkerEdit();
-    }
+    if (!this.showWorkerForm) this.cancelWorkerEdit();
   }
 
   loadWorkers(): void {
     this.loading = true;
-
     this.workerService.getAllWorkers().subscribe({
       next: (workers) => {
         this.workers = workers;
         this.loading = false;
-
-        if (this.showHoursForm) {
-          this.buildWorkersHoursArray();
-        }
-
+        if (this.showHoursForm) this.loadWeeklyHours();
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -96,23 +83,19 @@ export class AdminComponent implements OnInit {
   editWorker(worker: Worker): void {
     this.editingWorkerId = worker.id;
     this.showWorkerForm = true;
-
     this.workerForm.patchValue({
       category: worker.category,
       name: worker.name,
       buyPrice: worker.buyPrice,
       sellPrice: worker.sellPrice,
     });
-
     this.cdr.detectChanges();
   }
 
   saveWorker(): void {
     if (this.workerForm.invalid) return;
-
     const workerData = this.workerForm.value;
-
-    if (this.editingWorkerId !== null) {
+    if (this.editingWorkerId) {
       this.workerService.updateWorker(this.editingWorkerId, workerData).subscribe({
         next: () => {
           this.showSuccess('Worker updated successfully');
@@ -120,9 +103,7 @@ export class AdminComponent implements OnInit {
           this.cancelWorkerEdit();
           this.cdr.detectChanges();
         },
-        error: (error) => {
-          this.showError('Failed to update worker: ' + error.message);
-        },
+        error: (error) => this.showError('Failed to update worker: ' + error.message),
       });
     } else {
       this.workerService.createWorker(workerData).subscribe({
@@ -132,31 +113,21 @@ export class AdminComponent implements OnInit {
           this.cancelWorkerEdit();
           this.cdr.detectChanges();
         },
-        error: (error) => {
-          this.showError('Failed to create worker: ' + error.message);
-        },
+        error: (error) => this.showError('Failed to create worker: ' + error.message),
       });
     }
   }
 
   deleteWorker(id: string): void {
-    if (confirm('Are you sure you want to delete this worker?')) {
-      this.workerService.deleteWorker(id).subscribe({
-        next: () => {
-          this.showSuccess('Worker deleted successfully');
-          this.loadWorkers();
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          this.showError('Failed to delete worker: ' + error.message);
-        },
-      });
-    }
-  }
-
-  getWorkerName(workerId: string): string {
-    const worker = this.workers.find((w) => w.id === workerId);
-    return worker ? worker.name : 'Unknown';
+    if (!confirm('Are you sure you want to delete this worker?')) return;
+    this.workerService.deleteWorker(id).subscribe({
+      next: () => {
+        this.showSuccess('Worker deleted successfully');
+        this.loadWorkers();
+        this.cdr.detectChanges();
+      },
+      error: (error) => this.showError('Failed to delete worker: ' + error.message),
+    });
   }
 
   setCurrentWeek(): void {
@@ -184,74 +155,81 @@ export class AdminComponent implements OnInit {
 
   onWeekChange(): void {
     const weekValue = this.hoursForm.get('selectedWeek')?.value;
-    if (weekValue) {
-      this.calculateWeekDays(weekValue);
-      this.buildWorkersHoursArray();
-    }
+    if (!weekValue) return;
+    this.calculateWeekDays(weekValue);
+    this.loadWeeklyHours();
   }
 
   calculateWeekDays(weekString: string): void {
     const [year, week] = weekString.split('-W').map(Number);
     const monday = this.getDateFromWeek(year, week);
-
     const dayNames = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
     this.weekDays = [];
-
     for (let i = 0; i < 7; i++) {
       const currentDay = new Date(monday);
       currentDay.setDate(monday.getDate() + i);
-
-      this.weekDays.push({
-        name: dayNames[i],
-        date: currentDay,
-        dayOfWeek: i + 1,
-      });
+      this.weekDays.push({ name: dayNames[i], date: currentDay, dayOfWeek: i + 1 });
     }
-
     this.cdr.detectChanges();
   }
 
-  buildWorkersHoursArray(): void {
+  getWeekRangeDisplay(): string {
+    if (this.weekDays.length === 0) return '';
+    const firstDay = this.weekDays[0].date;
+    const lastDay = this.weekDays[6].date;
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    };
+    const firstDateStr = firstDay.toLocaleDateString('en-US', options);
+    const lastDateStr = lastDay.toLocaleDateString('en-US', options);
+    return `${firstDateStr} - ${lastDateStr}`;
+  }
+
+  buildWorkersHoursArray(existingHours: any[] = []): void {
     this.workersHoursArray.clear();
-
     this.workers.forEach((worker) => {
-      const workerGroup = this.formBuilder.group({
-        workerId: [worker.id],
-        day0: [0, [Validators.min(0), Validators.max(24)]],
-        day1: [0, [Validators.min(0), Validators.max(24)]],
-        day2: [0, [Validators.min(0), Validators.max(24)]],
-        day3: [0, [Validators.min(0), Validators.max(24)]],
-        day4: [0, [Validators.min(0), Validators.max(24)]],
-        day5: [0, [Validators.min(0), Validators.max(24)]],
-        day6: [0, [Validators.min(0), Validators.max(24)]],
+      const workerHours = existingHours.filter((h) => h.worker.id === worker.id);
+      const group: any = { workerId: [worker.id] };
+      this.weekDays.forEach((day, dayIndex) => {
+        const dayHour = workerHours.find((h) => h.date === day.date.toISOString().split('T')[0]);
+        group[`day${dayIndex}`] = [
+          dayHour ? dayHour.hours : 0,
+          [Validators.min(0), Validators.max(24)],
+        ];
       });
-
-      this.workersHoursArray.push(workerGroup);
+      this.workersHoursArray.push(this.formBuilder.group(group));
     });
-
     this.cdr.detectChanges();
   }
 
   previousWeek(): void {
     const weekValue = this.hoursForm.get('selectedWeek')?.value;
-    if (weekValue) {
-      const [year, week] = weekValue.split('-W').map(Number);
-      const date = this.getDateFromWeek(year, week);
-      date.setDate(date.getDate() - 7);
-      this.hoursForm.patchValue({ selectedWeek: this.getWeekString(date) });
-      this.onWeekChange();
-    }
+    if (!weekValue) return;
+    const [year, week] = weekValue.split('-W').map(Number);
+    const date = this.getDateFromWeek(year, week);
+    date.setDate(date.getDate() - 7);
+    this.hoursForm.patchValue({ selectedWeek: this.getWeekString(date) });
+    this.onWeekChange();
   }
 
   nextWeek(): void {
     const weekValue = this.hoursForm.get('selectedWeek')?.value;
-    if (weekValue) {
-      const [year, week] = weekValue.split('-W').map(Number);
-      const date = this.getDateFromWeek(year, week);
-      date.setDate(date.getDate() + 7);
-      this.hoursForm.patchValue({ selectedWeek: this.getWeekString(date) });
-      this.onWeekChange();
-    }
+    if (!weekValue) return;
+    const [year, week] = weekValue.split('-W').map(Number);
+    const date = this.getDateFromWeek(year, week);
+    date.setDate(date.getDate() + 7);
+    this.hoursForm.patchValue({ selectedWeek: this.getWeekString(date) });
+    this.onWeekChange();
+  }
+
+  // Totals
+  getWorkerWeekTotal(workerIndex: number): number {
+    const workerControl = this.workersHoursArray.at(workerIndex);
+    let total = 0;
+    for (let i = 0; i < 7; i++) total += parseFloat(workerControl.get(`day${i}`)?.value || 0);
+    return Math.round(total * 10) / 10;
   }
 
   goToCurrentWeek(): void {
@@ -268,106 +246,74 @@ export class AdminComponent implements OnInit {
     return targetMonday;
   }
 
-  getWeekRangeDisplay(): string {
-    if (this.weekDays.length === 0) return '';
-    const firstDay = this.weekDays[0].date;
-    const lastDay = this.weekDays[6].date;
-
-    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric' };
-    const firstDateStr = firstDay.toLocaleDateString('en-US', options);
-    const lastDateStr = lastDay.toLocaleDateString('en-US', options);
-
-    return `${firstDateStr} - ${lastDateStr}`;
-  }
-
-  getWorkerWeekTotal(workerIndex: number): number {
-    const workerControl = this.workersHoursArray.at(workerIndex);
-    let total = 0;
-
-    for (let i = 0; i < 7; i++) {
-      const dayValue = workerControl.get(`day${i}`)?.value;
-      total += parseFloat(dayValue || 0);
-    }
-
-    return Math.round(total * 10) / 10;
-  }
-
   getDayTotal(dayIndex: number): number {
     let total = 0;
-
-    this.workersHoursArray.controls.forEach((workerControl) => {
-      const dayValue = workerControl.get(`day${dayIndex}`)?.value;
-      total += parseFloat(dayValue || 0);
-    });
-
+    this.workersHoursArray.controls.forEach(
+      (ctrl) => (total += parseFloat(ctrl.get(`day${dayIndex}`)?.value || 0)),
+    );
     return Math.round(total * 10) / 10;
   }
 
   getGrandTotal(): number {
     let total = 0;
-
-    this.workersHoursArray.controls.forEach((workerControl) => {
-      for (let i = 0; i < 7; i++) {
-        const dayValue = workerControl.get(`day${i}`)?.value;
-        total += parseFloat(dayValue || 0);
-      }
+    this.workersHoursArray.controls.forEach((ctrl) => {
+      for (let i = 0; i < 7; i++) total += parseFloat(ctrl.get(`day${i}`)?.value || 0);
     });
-
     return Math.round(total * 10) / 10;
   }
 
   clearAllHours(): void {
-    this.workersHoursArray.controls.forEach((workerControl) => {
-      for (let i = 0; i < 7; i++) {
-        workerControl.get(`day${i}`)?.setValue(0);
-      }
+    this.workersHoursArray.controls.forEach((ctrl) => {
+      for (let i = 0; i < 7; i++) ctrl.get(`day${i}`)?.setValue(0);
     });
   }
 
   toggleHoursForm(): void {
     this.showHoursForm = !this.showHoursForm;
-
-    if (this.showHoursForm) {
-      this.setCurrentWeek();
-    } else {
-      this.hoursForm.reset();
-    }
-
+    if (this.showHoursForm) this.setCurrentWeek();
+    else this.hoursForm.reset();
     this.cdr.detectChanges();
   }
 
   saveHours(): void {
-    if (this.hoursForm.valid) {
-      const payload = this.hoursForm.value.workersHours.flatMap(
-        (workerHours: any, workerIndex: number) => {
-          const workerId = this.workers[workerIndex].id;
+    if (!this.hoursForm.valid) return;
 
-          return this.weekDays
-            .map((day, dayIndex) => {
-              const hours = Number(workerHours[`day${dayIndex}`]);
+    const payload = this.hoursForm.value.workersHours.flatMap(
+      (workerHours: any, workerIndex: number) => {
+        const workerId = this.workers[workerIndex].id;
+        return this.weekDays
+          .map((day, dayIndex) => {
+            const hours = Number(workerHours[`day${dayIndex}`]);
+            if (!hours || hours <= 0) return null;
+            return { date: day.date.toISOString().split('T')[0], hours, worker: { id: workerId } };
+          })
+          .filter(Boolean);
+      },
+    );
 
-              if (!hours || hours <= 0) return null;
+    this.workingHoursService.createWorkingHours(payload).subscribe({
+      next: () => console.log('Hours saved'),
+      error: (err) => console.error('Error saving hours', err),
+    });
 
-              return {
-                date: day.date.toISOString().split('T')[0],
-                hours: hours,
-                worker: { id: workerId },
-              };
-            })
-            .filter(Boolean);
-        },
-      );
-      this.workingHoursService.createWorkingHours(payload).subscribe({
-        next: () => {
-          console.log('Hours saved');
-        },
-        error: (err) => {
-          console.error('Error saving hours', err);
-        },
-      });
-      this.toggleHoursForm();
-      this.cdr.detectChanges();
-    }
+    this.toggleHoursForm();
+    this.cdr.detectChanges();
+  }
+
+  private loadWeeklyHours(): void {
+    if (!this.weekDays.length || !this.workers.length) return;
+    const startDate = this.weekDays[0].date.toISOString().split('T')[0];
+    const endDate = this.weekDays[6].date.toISOString().split('T')[0];
+
+    this.workingHoursService.getWorkingHours(startDate, endDate).subscribe({
+      next: (hoursFromBackend) => {
+        this.buildWorkersHoursArray(hoursFromBackend);
+      },
+      error: (err) => {
+        console.error('Error loading weekly hours', err);
+        this.buildWorkersHoursArray([]);
+      },
+    });
   }
 
   private showSuccess(message: string): void {
@@ -382,4 +328,3 @@ export class AdminComponent implements OnInit {
     setTimeout(() => (this.errorMessage = ''), 5000);
   }
 }
-

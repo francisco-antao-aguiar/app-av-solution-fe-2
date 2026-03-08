@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { WorkingHours } from '../models/worker.model';
 
 export interface WorkingHoursPayload {
   date: string;
@@ -27,34 +28,19 @@ export class WorkingHoursService {
   }
 
   /**
-   * Get all working hours
-   * GET /working-hours
+   * Fetch working hours from backend
+   * @param startDate optional start date in ISO format (yyyy-MM-dd)
+   * @param endDate optional end date in ISO format (yyyy-MM-dd)
    */
-  getAllWorkingHours(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
-  }
+  getWorkingHours(startDate?: string, endDate?: string): Observable<WorkingHours[]> {
+    let params = new HttpParams();
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
 
-  /**
-   * Get working hours for a worker
-   * GET /working-hours/worker/{workerId}
-   */
-  getWorkingHoursByWorker(workerId: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/worker/${workerId}`);
-  }
-
-  /**
-   * Get working hours for a specific date
-   * GET /working-hours/date/{date}
-   */
-  getWorkingHoursByDate(date: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/date/${date}`);
-  }
-
-  /**
-   * Delete working hours entry
-   * DELETE /working-hours/{id}
-   */
-  deleteWorkingHours(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.get<WorkingHours[]>(this.apiUrl, { params });
   }
 }
