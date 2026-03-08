@@ -1,0 +1,240 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-secondary-900">Admin Panel</h1>
+        <p class="mt-1 text-sm text-secondary-600">Manage workers and working hours</p>
+      </div>
+      <span class="px-4 py-2 text-sm font-semibold rounded-full bg-accent-100 text-accent-700">
+        Admin Access
+      </span>
+    </div>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="bg-success-50 border border-success-200 text-success-800 px-4 py-3 rounded-lg animate-pulse" role="alert">
+    <div class="flex items-center">
+      <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      </svg>
+      <span>{{ successMessage }}</span>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="bg-danger-50 border border-danger-200 text-danger-800 px-4 py-3 rounded-lg" role="alert">
+    <div class="flex items-center">
+      <svg class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <!-- Workers Management Section -->
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-secondary-900">Workers Management</h2>
+      <button
+        (click)="toggleWorkerForm()"
+        class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-all"
+      >
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add Worker
+      </button>
+    </div>
+
+    <!-- Worker Form -->
+    <div *ngIf="showWorkerForm" class="px-6 py-4 bg-primary-50 border-b border-primary-200">
+      <form [formGroup]="workerForm" (ngSubmit)="saveWorker()" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Category</label>
+            <input
+              type="text"
+              formControlName="category"
+              placeholder="e.g., Consultant, Developer"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Name</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="Worker name"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Buy Price per Hour ($)</label>
+            <input
+              type="number"
+              formControlName="buyPricePerHour"
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Sell Price per Hour ($)</label>
+            <input
+              type="number"
+              formControlName="sellPricePerHour"
+              placeholder="0.00"
+              step="0.01"
+              min="0"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+        </div>
+        
+        <div class="flex space-x-3">
+          <button
+            type="submit"
+            [disabled]="workerForm.invalid"
+            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-success-600 hover:bg-success-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {{ editingWorkerId ? 'Update Worker' : 'Create Worker' }}
+          </button>
+          <button
+            type="button"
+            (click)="cancelWorkerEdit()"
+            class="px-4 py-2 border border-secondary-300 rounded-lg shadow-sm text-sm font-medium text-secondary-700 bg-white hover:bg-secondary-50 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Workers Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-secondary-200">
+        <thead class="bg-secondary-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">Category</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-secondary-700 uppercase tracking-wider">Name</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-secondary-700 uppercase tracking-wider">Buy Price</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-secondary-700 uppercase tracking-wider">Sell Price</th>
+            <th class="px-6 py-3 text-center text-xs font-medium text-secondary-700 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-secondary-200">
+          <tr *ngFor="let worker of workers; let i = index" [class.bg-secondary-50]="i % 2 === 1" class="hover:bg-primary-50 transition-all">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-700">{{ worker.id }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-secondary-900">{{ worker.category }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-700">{{ worker.name }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-secondary-700">${{ worker.buyPricePerHour }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-secondary-700">${{ worker.sellPricePerHour }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+              <button
+                (click)="editWorker(worker)"
+                class="text-primary-600 hover:text-primary-900 mr-3 transition-all"
+              >
+                <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </button>
+              <button
+                (click)="deleteWorker(worker.id)"
+                class="text-danger-600 hover:text-danger-900 transition-all"
+              >
+                <svg class="h-5 w-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div *ngIf="workers.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-secondary-900">No workers</h3>
+        <p class="mt-1 text-sm text-secondary-500">Get started by adding a new worker.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Working Hours Management Section -->
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-secondary-50 border-b border-secondary-200 flex justify-between items-center">
+      <h2 class="text-lg font-semibold text-secondary-900">Working Hours Management</h2>
+      <button
+        (click)="toggleHoursForm()"
+        class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 transition-all"
+      >
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add Hours
+      </button>
+    </div>
+
+    <!-- Hours Form -->
+    <div *ngIf="showHoursForm" class="px-6 py-6">
+      <form [formGroup]="hoursForm" (ngSubmit)="saveHours()" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Worker</label>
+            <select
+              formControlName="workerId"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            >
+              <option value="">Select worker</option>
+              <option *ngFor="let worker of workers" [value]="worker.id">{{ worker.name }} ({{ worker.category }})</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Date</label>
+            <input
+              type="date"
+              formControlName="date"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-1">Hours</label>
+            <input
+              type="number"
+              formControlName="hours"
+              placeholder="0"
+              step="0.5"
+              min="0"
+              max="24"
+              class="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            />
+          </div>
+        </div>
+        
+        <div class="flex space-x-3">
+          <button
+            type="submit"
+            [disabled]="hoursForm.invalid"
+            class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-success-600 hover:bg-success-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            Save Hours
+          </button>
+          <button
+            type="button"
+            (click)="toggleHoursForm()"
+            class="px-4 py-2 border border-secondary-300 rounded-lg shadow-sm text-sm font-medium text-secondary-700 bg-white hover:bg-secondary-50 transition-all"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div *ngIf="!showHoursForm" class="px-6 py-6">
+      <p class="text-sm text-secondary-600">Click "Add Hours" to register working hours for a worker on a specific date.</p>
+    </div>
+  </div>
+</div>
