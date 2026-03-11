@@ -4,6 +4,7 @@ import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } fr
 import { WorkerService } from '../../core/services/worker.service';
 import { WeekDay, Worker } from '../../core/models/worker.model';
 import { WorkingHoursService } from '../../core/services/working-hours.service';
+import { LayoutComponent } from '../../shared/components/layout.component';
 
 @Component({
   selector: 'app-admin',
@@ -29,6 +30,7 @@ export class AdminComponent implements OnInit {
     private workerService: WorkerService,
     private workingHoursService: WorkingHoursService,
     private cdr: ChangeDetectorRef,
+    protected layoutComponent: LayoutComponent,
   ) {
     this.workerForm = this.formBuilder.group({
       category: ['', Validators.required],
@@ -180,7 +182,7 @@ export class AdminComponent implements OnInit {
     const options: Intl.DateTimeFormatOptions = {
       day: '2-digit',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     };
     const firstDateStr = firstDay.toLocaleDateString('en-US', options);
     const lastDateStr = lastDay.toLocaleDateString('en-US', options);

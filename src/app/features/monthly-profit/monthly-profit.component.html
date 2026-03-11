@@ -6,10 +6,10 @@
         <h1 class="text-2xl font-bold text-secondary-900">Análise de Lucro Mensal</h1>
         <p class="mt-1 text-sm text-secondary-600">{{ getPeriodDateRange() }}</p>
         <span class="inline-block mt-2 px-3 py-1 text-xs font-semibold rounded-full bg-accent-100 text-accent-700">
-          Admin
+          Management
         </span>
       </div>
-      
+
       <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
         <div class="flex items-center space-x-2">
           <label for="monthPicker" class="text-sm font-medium text-secondary-700">Período:</label>
@@ -21,7 +21,7 @@
             class="px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
           />
         </div>
-        
+
         <button
           (click)="exportToCsv()"
           [disabled]="loading || monthlyData.length === 0"
@@ -61,7 +61,7 @@
       <div class="flex items-center justify-between">
         <div>
           <p class="text-warning-100 text-sm font-medium">Custo Total de Compra</p>
-          <p class="text-2xl font-bold mt-2">${{ getTotalBuyCost().toFixed(2) }}</p>
+          <p class="text-2xl font-bold mt-2">€{{ getTotalBuyCost().toFixed(2) }}</p>
         </div>
         <div class="bg-white bg-opacity-20 rounded-full p-3">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@
       <div class="flex items-center justify-between">
         <div>
           <p class="text-accent-100 text-sm font-medium">Preço Total de Venda</p>
-          <p class="text-2xl font-bold mt-2">${{ getTotalSellPrice().toFixed(2) }}</p>
+          <p class="text-2xl font-bold mt-2">€{{ getTotalSellPrice().toFixed(2) }}</p>
         </div>
         <div class="bg-white bg-opacity-20 rounded-full p-3">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@
       <div class="flex items-center justify-between">
         <div>
           <p class="text-success-100 text-sm font-medium">Lucro Total</p>
-          <p class="text-2xl font-bold mt-2">${{ getTotalProfit().toFixed(2) }}</p>
+          <p class="text-2xl font-bold mt-2">€{{ getTotalProfit().toFixed(2) }}</p>
         </div>
         <div class="bg-white bg-opacity-20 rounded-full p-3">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,10 +113,10 @@
               Nome
             </th>
             <th (click)="sort('buyPrice')" class="px-2 py-2 text-center text-xs font-medium text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
-              Compra $
+              Compra
             </th>
             <th (click)="sort('sellPrice')" class="px-2 py-2 text-center text-xs font-medium text-secondary-700 uppercase cursor-pointer hover:bg-secondary-100">
-              Venda $
+              Venda
             </th>
             <th *ngFor="let header of dateHeaders" class="px-1 py-2 text-center text-xs font-medium text-secondary-700 uppercase">
               {{ header }}
@@ -144,31 +144,31 @@
               {{ row.name }}
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-center text-secondary-700">
-              ${{ row.buyPrice }}
+              €{{ row.buyPrice }}
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-center text-secondary-700">
-              ${{ row.sellPrice }}
+              €{{ row.sellPrice }}
             </td>
             <td *ngFor="let hours of row.dailyHours" class="px-1 py-2 whitespace-nowrap text-center">
               <span *ngIf="hours !== null" [class.text-success-600]="hours > 0" [class.font-semibold]="hours > 0">
                 {{ hours }}
               </span>
-              <span *ngIf="hours === null" class="text-danger-500 font-semibold">X</span>
+              <span *ngIf="hours === null" class="text-danger-500 font-semibold">-</span>
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-center font-bold text-primary-700">
               {{ row.totalHours }}
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-right text-warning-700">
-              ${{ row.totalBuyCost.toFixed(2) }}
+              €{{ row.totalBuyCost.toFixed(2) }}
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-right text-accent-700">
-              ${{ row.totalSellPrice.toFixed(2) }}
+              €{{ row.totalSellPrice.toFixed(2) }}
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-right font-bold" [class.text-success-700]="row.profit > 0" [class.text-danger-700]="row.profit < 0">
-              ${{ row.profit.toFixed(2) }}
+              €{{ row.profit.toFixed(2) }}
             </td>
           </tr>
-          
+
           <!-- Totals Row -->
           <tr *ngIf="monthlyData.length > 0" class="bg-primary-100 font-bold">
             <td colspan="4" class="px-3 py-2 text-secondary-900">TOTAL</td>
@@ -176,20 +176,20 @@
               {{ getDailyTotal(j) }}
             </td>
             <td class="px-2 py-2 text-center text-primary-700">{{ getTotalHours() }}</td>
-            <td class="px-2 py-2 text-right text-primary-700">${{ getTotalBuyCost().toFixed(2) }}</td>
-            <td class="px-2 py-2 text-right text-primary-700">${{ getTotalSellPrice().toFixed(2) }}</td>
-            <td class="px-2 py-2 text-right text-primary-700">${{ getTotalProfit().toFixed(2) }}</td>
+            <td class="px-2 py-2 text-right text-primary-700">€{{ getTotalBuyCost().toFixed(2) }}</td>
+            <td class="px-2 py-2 text-right text-primary-700">€{{ getTotalSellPrice().toFixed(2) }}</td>
+            <td class="px-2 py-2 text-right text-primary-700">€{{ getTotalProfit().toFixed(2) }}</td>
           </tr>
         </tbody>
       </table>
-      
+
       <!-- Empty State -->
       <div *ngIf="monthlyData.length === 0" class="text-center py-12">
         <svg class="mx-auto h-12 w-12 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-secondary-900">No data available</h3>
-        <p class="mt-1 text-sm text-secondary-500">No working hours recorded for this period.</p>
+        <h3 class="mt-2 text-sm font-medium text-secondary-900">Sem Dados</h3>
+        <p class="mt-1 text-sm text-secondary-500">Nao existem horas para o tempo selecionado.</p>
       </div>
     </div>
   </div>

@@ -11,7 +11,7 @@ import { AdminComponent } from './features/admin/admin.component';
 export const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent
+    component: LoginComponent,
   },
   {
     path: '',
@@ -21,30 +21,30 @@ export const routes: Routes = [
       {
         path: '',
         redirectTo: 'weekly-hours',
-        pathMatch: 'full'
+        pathMatch: 'full',
       },
       {
         path: 'weekly-hours',
-        component: WeeklyHoursComponent
+        component: WeeklyHoursComponent,
       },
       {
         path: 'monthly-buy',
-        component: MonthlyBuyComponent
+        component: MonthlyBuyComponent,
+        canActivate: [adminGuard],
       },
       {
         path: 'monthly-profit',
         component: MonthlyProfitComponent,
-        canActivate: [adminGuard]
+        canActivate: [adminGuard],
       },
       {
-        path: 'admin',
+        path: 'management',
         component: AdminComponent,
-        canActivate: [adminGuard]
-      }
-    ]
+      },
+    ],
   },
   {
     path: '**',
-    redirectTo: 'login'
-  }
+    redirectTo: 'login',
+  },
 ];

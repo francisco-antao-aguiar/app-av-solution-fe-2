@@ -6,7 +6,7 @@
         <h1 class="text-2xl font-bold text-secondary-900">Horas semanais</h1>
         <p class="mt-1 text-sm text-secondary-600">{{ getWeekDateRange() }}</p>
       </div>
-      
+
       <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
         <!-- Week Picker -->
         <div class="flex items-center space-x-2">
@@ -19,7 +19,7 @@
             class="px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
           />
         </div>
-        
+
         <!-- Export Button -->
         <button
           (click)="exportToCsv()"
@@ -181,7 +181,7 @@
               {{ row.totalHours }}
             </td>
           </tr>
-          
+
           <!-- Totals Row -->
           <tr *ngIf="weeklyData.length > 0" class="bg-primary-100 font-bold">
             <td colspan="2" class="px-6 py-4 text-sm text-secondary-900">TOTAL</td>
@@ -196,14 +196,14 @@
           </tr>
         </tbody>
       </table>
-      
+
       <!-- Empty State -->
       <div *ngIf="weeklyData.length === 0" class="text-center py-12">
         <svg class="mx-auto h-12 w-12 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-secondary-900">No data available</h3>
-        <p class="mt-1 text-sm text-secondary-500">No working hours recorded for this week.</p>
+        <h3 class="mt-2 text-sm font-medium text-secondary-900">Sem Dados</h3>
+        <p class="mt-1 text-sm text-secondary-500">Nao existem horas para o tempo selecionado.</p>
       </div>
     </div>
   </div>

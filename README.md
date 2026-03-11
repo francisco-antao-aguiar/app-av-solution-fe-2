@@ -44,7 +44,7 @@ A modern, responsive web application built with Angular and Tailwind CSS for tra
 - Month picker to select different periods
 - Worker category, name, and buy price per hour
 - Daily hours grid for the entire period (30-31 days)
-- Shows "X" for days not worked
+- Shows "-" for days not worked
 - Total hours and total buy cost calculations
 - Summary cards showing total hours and total cost
 - Sortable columns

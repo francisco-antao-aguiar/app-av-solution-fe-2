@@ -119,7 +119,7 @@ export class MonthlyBuyComponent implements OnInit {
       };
 
       row.dailyHours.forEach((hours, index) => {
-        data[this.dateHeaders[index]] = hours === null ? 'X' : hours;
+        data[this.dateHeaders[index]] = hours === null ? '-' : hours;
       });
 
       data['Total Hours'] = row.totalHours;

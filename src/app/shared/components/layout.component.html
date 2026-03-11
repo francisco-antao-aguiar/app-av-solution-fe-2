@@ -24,6 +24,7 @@
               Vista Semanal
             </a>
             <a
+              *ngIf="isAdmin()"
               routerLink="/monthly-buy"
               routerLinkActive="bg-primary-100 text-primary-700"
               class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-700 hover:bg-secondary-100 transition-all"
@@ -39,12 +40,11 @@
               Vista de Contas Mensal
             </a>
             <a
-              *ngIf="isAdmin()"
-              routerLink="/admin"
+              routerLink="/management"
               routerLinkActive="bg-primary-100 text-primary-700"
               class="px-4 py-2 rounded-lg text-sm font-medium text-secondary-700 hover:bg-secondary-100 transition-all"
             >
-              Admin
+              Gestao
             </a>
           </div>
         </div>
@@ -96,6 +96,7 @@
           Weekly Hours
         </a>
         <a
+          *ngIf="isAdmin()"
           routerLink="/monthly-buy"
           routerLinkActive="bg-primary-100 text-primary-700"
           (click)="toggleMobileMenu()"
@@ -113,15 +114,14 @@
           Monthly Profit
         </a>
         <a
-          *ngIf="isAdmin()"
-          routerLink="/admin"
+          routerLink="/management"
           routerLinkActive="bg-primary-100 text-primary-700"
           (click)="toggleMobileMenu()"
           class="block px-4 py-3 rounded-lg text-base font-medium text-secondary-700 hover:bg-secondary-100 transition-all"
         >
-          Admin
+          Gestao
         </a>
-        
+
         <!-- Mobile User Info and Logout -->
         <div class="pt-4 border-t border-secondary-200 mt-4">
           <div class="px-4 py-2">
