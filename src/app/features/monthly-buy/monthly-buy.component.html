@@ -95,10 +95,10 @@
                 </svg>
               </div>
             </th>
-            <th (click)="sort('buyPrice')" class="px-4 py-3 text-center text-xs font-medium text-secondary-700 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-all">
+            <th (click)="sort('sellPrice')" class="px-4 py-3 text-center text-xs font-medium text-secondary-700 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-all">
               <div class="flex items-center justify-center space-x-1">
-                <span>Preço de Compra</span>
-                <svg *ngIf="sortColumn === 'buyPrice'" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <span>Preço de Venda</span>
+                <svg *ngIf="sortColumn === 'sellPrice'" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path *ngIf="sortDirection === 'asc'" d="M5 10l5-5 5 5H5z"/>
                   <path *ngIf="sortDirection === 'desc'" d="M15 10l-5 5-5-5h10z"/>
                 </svg>
@@ -136,7 +136,7 @@
               {{ row.name }}
             </td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-center text-secondary-700">
-              €{{ row.buyPrice }}
+              €{{ row.sellPrice }}
             </td>
             <td *ngFor="let hours of row.dailyHours; let j = index" class="px-2 py-3 whitespace-nowrap text-sm text-center">
               <span *ngIf="hours !== null" [class.text-success-600]="hours > 0" [class.font-semibold]="hours > 0">

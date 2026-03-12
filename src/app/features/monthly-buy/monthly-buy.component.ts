@@ -117,7 +117,7 @@ export class MonthlyBuyComponent implements OnInit {
       const data: any = {
         Category: row.category,
         Name: row.name,
-        'Buy Price': row.buyPrice,
+        'Sell Price': row.sellPrice,
       };
 
       row.dailyHours.forEach((hours, index) => {
@@ -125,7 +125,7 @@ export class MonthlyBuyComponent implements OnInit {
       });
 
       data['Total Hours'] = row.totalHours;
-      data['Total Buy Cost'] = row.totalBuyCost.toFixed(2);
+      data['Total Sell Cost'] = row.totalBuyCost.toFixed(2);
 
       return data;
     });

@@ -31,7 +31,7 @@ export interface MonthlyBuyRow {
   workerId: string;
   category: string;
   name: string;
-  buyPrice: number;
+  sellPrice: number;
   dailyHours: (number | null)[];
   totalHours: number;
   totalBuyCost: number;

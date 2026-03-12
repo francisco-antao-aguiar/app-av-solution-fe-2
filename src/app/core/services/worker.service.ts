@@ -188,7 +188,7 @@ export class WorkerService {
           workerId: worker.id,
           category: worker.category,
           name: worker.name,
-          buyPrice: Number(worker.buyPrice),
+          sellPrice: Number(worker.sellPrice),
           dailyHours: new Array(dates.length).fill(null),
           totalHours: 0,
           totalBuyCost: 0,
@@ -204,7 +204,7 @@ export class WorkerService {
         row.totalHours += value;
       }
 
-      row.totalBuyCost = row.totalHours * row.buyPrice;
+      row.totalBuyCost = row.totalHours * row.sellPrice;
     });
 
     return Array.from(mapRows.values());
