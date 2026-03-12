@@ -58,7 +58,9 @@ export class MonthlyBuyComponent implements OnInit {
     this.endDate = end.toISOString().split('T')[0];
 
     this.dateHeaders = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    // avoid timezone/DST drift by advancing with a fixed amount of
+    // milliseconds rather than manipulating the Date object directly.
+    for (let d = new Date(start); d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
       const day = d.getDate();
       const monthNum = d.getMonth() + 1;
       this.dateHeaders.push(`${day}/${monthNum}`);

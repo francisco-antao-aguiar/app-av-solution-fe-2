@@ -168,8 +168,14 @@ export class WorkerService {
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(new Date(d).toISOString().split('T')[0]);
+    // iterate using a fixed millisecond increment instead of setDate
+    // to avoid timezone/daylight‑saving shifts that can produce
+    // duplicate or missing dates when converting to ISO strings.
+    for (let d = new Date(start); d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      dates.push(`${year}-${month}-${day}`);
     }
 
     const mapRows = new Map<string, MonthlyBuyRow>();
