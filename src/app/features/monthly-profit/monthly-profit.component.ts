@@ -37,7 +37,7 @@ export class MonthlyProfitComponent implements OnInit {
     let year = today.getFullYear();
     let month = today.getMonth();
 
-    if (today.getDate() < 21) {
+    if (today.getDate() < 26) {
       month--;
       if (month < 0) {
         month = 11;
@@ -51,14 +51,16 @@ export class MonthlyProfitComponent implements OnInit {
 
   calculatePeriod(): void {
     const [year, month] = this.selectedMonth.split('-').map(Number);
-    const start = new Date(year, month - 1, 21);
+    const start = new Date(year, month - 1, 26);
     this.startDate = start.toISOString().split('T')[0];
 
-    const end = new Date(year, month, 20);
+    const end = new Date(year, month, 25);
     this.endDate = end.toISOString().split('T')[0];
 
     this.dateHeaders = [];
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    // avoid timezone/DST drift by advancing with a fixed amount of
+    // milliseconds rather than manipulating the Date object directly.
+    for (let d = new Date(start); d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
       const day = d.getDate();
       const monthNum = d.getMonth() + 1;
       this.dateHeaders.push(`${day}/${monthNum}`);
