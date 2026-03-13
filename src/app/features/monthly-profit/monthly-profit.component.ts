@@ -51,10 +51,10 @@ export class MonthlyProfitComponent implements OnInit {
 
   calculatePeriod(): void {
     const [year, month] = this.selectedMonth.split('-').map(Number);
-    const start = new Date(year, month - 1, 26);
+    const start = new Date(year, month - 2, 26);
     this.startDate = start.toISOString().split('T')[0];
 
-    const end = new Date(year, month, 25);
+    const end = new Date(year, month - 1, 25);
     this.endDate = end.toISOString().split('T')[0];
 
     this.dateHeaders = [];
