@@ -125,7 +125,7 @@ export class MonthlyBuyComponent implements OnInit {
       });
 
       data['Total Hours'] = row.totalHours;
-      data['Total Sell Cost'] = row.totalBuyCost.toFixed(2);
+      data['Total Sell Cost'] = row.totalSellPrice.toFixed(2);
 
       return data;
     });
@@ -165,7 +165,7 @@ export class MonthlyBuyComponent implements OnInit {
   }
 
   getTotalCost(): number {
-    return this.monthlyData.reduce((sum, row) => sum + row.totalBuyCost, 0);
+    return this.monthlyData.reduce((sum, row) => sum + row.totalSellPrice, 0);
   }
 
   getDailyTotal(dayIndex: number): number {

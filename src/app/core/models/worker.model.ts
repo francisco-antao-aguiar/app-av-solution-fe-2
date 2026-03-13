@@ -34,7 +34,7 @@ export interface MonthlyBuyRow {
   sellPrice: number;
   dailyHours: (number | null)[];
   totalHours: number;
-  totalBuyCost: number;
+  totalSellPrice: number;
 }
 
 export interface MonthlyProfitRow {

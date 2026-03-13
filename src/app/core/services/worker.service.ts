@@ -171,7 +171,11 @@ export class WorkerService {
     // iterate using a fixed millisecond increment instead of setDate
     // to avoid timezone/daylight‑saving shifts that can produce
     // duplicate or missing dates when converting to ISO strings.
-    for (let d = new Date(start); d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
+    for (
+      let d = new Date(start);
+      d.getTime() <= end.getTime();
+      d = new Date(d.getTime() + 86400000)
+    ) {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
@@ -191,7 +195,7 @@ export class WorkerService {
           sellPrice: Number(worker.sellPrice),
           dailyHours: new Array(dates.length).fill(null),
           totalHours: 0,
-          totalBuyCost: 0,
+          totalSellPrice: 0,
         });
       }
 
@@ -204,7 +208,7 @@ export class WorkerService {
         row.totalHours += value;
       }
 
-      row.totalBuyCost = row.totalHours * row.sellPrice;
+      row.totalSellPrice = row.totalHours * row.sellPrice;
     });
 
     return Array.from(mapRows.values());
@@ -221,15 +225,14 @@ export class WorkerService {
       const workerHours = hours.find((h) => h.worker.id === row.workerId);
 
       const buyPrice = Number(workerHours.worker.buyPrice);
-      const sellPrice = Number(workerHours.worker.sellPrice);
-      const totalSellPrice = row.totalHours * sellPrice;
+      const totalBuyPrice = row.totalHours * buyPrice;
 
       return {
         ...row,
         buyPrice: buyPrice,
-        sellPrice: sellPrice,
-        totalSellPrice: totalSellPrice,
-        profit: totalSellPrice - row.totalBuyCost,
+        totalBuyCost: totalBuyPrice,
+        totalSellPrice: row.totalSellPrice,
+        profit: row.totalSellPrice - totalBuyPrice,
       };
     });
   }

@@ -97,7 +97,7 @@
             </th>
             <th (click)="sort('sellPrice')" class="px-4 py-3 text-center text-xs font-medium text-secondary-700 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-all">
               <div class="flex items-center justify-center space-x-1">
-                <span>Preço de Venda</span>
+                <span>Preço</span>
                 <svg *ngIf="sortColumn === 'sellPrice'" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path *ngIf="sortDirection === 'asc'" d="M5 10l5-5 5 5H5z"/>
                   <path *ngIf="sortDirection === 'desc'" d="M15 10l-5 5-5-5h10z"/>
@@ -116,9 +116,10 @@
                 </svg>
               </div>
             </th>
-            <th (click)="sort('totalBuyCost')" class="px-4 py-3 text-right text-xs font-medium text-secondary-700 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-all">
+            <th (click)="sort('totalSellPrice')"
+                class="px-4 py-3 text-right text-xs font-medium text-secondary-700 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-all">
               <div class="flex items-center justify-end space-x-1">
-                <span>Custo Total</span>
+                <span>Preço Total</span>
                 <svg *ngIf="sortColumn === 'totalBuyCost'" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                   <path *ngIf="sortDirection === 'asc'" d="M5 10l5-5 5 5H5z"/>
                   <path *ngIf="sortDirection === 'desc'" d="M15 10l-5 5-5-5h10z"/>
@@ -148,7 +149,7 @@
               {{ row.totalHours }}
             </td>
             <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-bold text-warning-700">
-              €{{ row.totalBuyCost.toFixed(2) }}
+              €{{ row.totalSellPrice.toFixed(2) }}
             </td>
           </tr>
 
