@@ -220,11 +220,13 @@ export class WorkerService {
     return buyRows.map((row) => {
       const workerHours = hours.find((h) => h.worker.id === row.workerId);
 
+      const buyPrice = Number(workerHours.worker.buyPrice);
       const sellPrice = Number(workerHours.worker.sellPrice);
       const totalSellPrice = row.totalHours * sellPrice;
 
       return {
         ...row,
+        buyPrice: buyPrice,
         sellPrice: sellPrice,
         totalSellPrice: totalSellPrice,
         profit: totalSellPrice - row.totalBuyCost,
