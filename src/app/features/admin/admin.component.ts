@@ -195,7 +195,8 @@ export class AdminComponent implements OnInit {
       const workerHours = existingHours.filter((h) => h.worker.id === worker.id);
       const group: any = { workerId: [worker.id] };
       this.weekDays.forEach((day, dayIndex) => {
-        const dayHour = workerHours.find((h) => h.date === day.date.toISOString().split('T')[0]);
+        const utcDate = new Date(Date.UTC(day.date.getFullYear(), day.date.getMonth(), day.date.getDate())).toISOString().split('T')[0];
+        const dayHour = workerHours.find((h) => h.date === utcDate);
         group[`day${dayIndex}`] = [
           dayHour ? dayHour.hours : 0,
           [Validators.min(0), Validators.max(24)],
@@ -287,7 +288,8 @@ export class AdminComponent implements OnInit {
           .map((day, dayIndex) => {
             const hours = Number(workerHours[`day${dayIndex}`]);
             if (hours == null || hours == undefined || hours < 0) return null;
-            return { date: day.date.toISOString().split('T')[0], hours, worker: { id: workerId } };
+            const utcDate = new Date(Date.UTC(day.date.getFullYear(), day.date.getMonth(), day.date.getDate()));
+            return { date: utcDate.toISOString().split('T')[0], hours, worker: { id: workerId } };
           })
           .filter(Boolean);
       },
@@ -304,8 +306,10 @@ export class AdminComponent implements OnInit {
 
   private loadWeeklyHours(): void {
     if (!this.weekDays.length || !this.workers.length) return;
-    const startDate = this.weekDays[0].date.toISOString().split('T')[0];
-    const endDate = this.weekDays[6].date.toISOString().split('T')[0];
+    const startUtcDate = new Date(Date.UTC(this.weekDays[0].date.getFullYear(), this.weekDays[0].date.getMonth(), this.weekDays[0].date.getDate()));
+    const endUtcDate = new Date(Date.UTC(this.weekDays[6].date.getFullYear(), this.weekDays[6].date.getMonth(), this.weekDays[6].date.getDate()));
+    const startDate = startUtcDate.toISOString().split('T')[0];
+    const endDate = endUtcDate.toISOString().split('T')[0];
 
     this.workingHoursService.getWorkingHours(startDate, endDate).subscribe({
       next: (hoursFromBackend) => {
