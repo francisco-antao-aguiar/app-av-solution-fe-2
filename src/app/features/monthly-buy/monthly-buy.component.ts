@@ -51,19 +51,31 @@ export class MonthlyBuyComponent implements OnInit {
 
   calculatePeriod(): void {
     const [year, month] = this.selectedMonth.split('-').map(Number);
-    const start = new Date(year, month - 1, 21);
-    this.startDate = start.toISOString().split('T')[0];
 
+    const start = new Date(year, month - 1, 21);
     const end = new Date(year, month, 20);
-    this.endDate = end.toISOString().split('T')[0];
+
+    // format without timezone conversion
+    const format = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate(),
+      ).padStart(2, '0')}`;
+
+    this.startDate = format(start);
+    this.endDate = format(end);
 
     this.dateHeaders = [];
-    // avoid timezone/DST drift by advancing with a fixed amount of
-    // milliseconds rather than manipulating the Date object directly.
-    for (let d = new Date(start); d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
-      const day = d.getDate();
-      const monthNum = d.getMonth() + 1;
-      this.dateHeaders.push(`${day}/${monthNum}`);
+
+    // normalize times
+    let d = new Date(start);
+    d.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(end);
+    endDate.setHours(0, 0, 0, 0);
+
+    while (d <= endDate) {
+      this.dateHeaders.push(`${d.getDate()}/${d.getMonth() + 1}`);
+      d.setDate(d.getDate() + 1);
     }
   }
 
