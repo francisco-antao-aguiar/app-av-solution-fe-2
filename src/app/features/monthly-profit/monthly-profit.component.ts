@@ -66,12 +66,16 @@ export class MonthlyProfitComponent implements OnInit {
     this.endDate = `${endYear}-${endMonth}-${endDay}`;
 
     this.dateHeaders = [];
-    // avoid timezone/DST drift by advancing with a fixed amount of
-    // milliseconds rather than manipulating the Date object directly.
-    for (let d = new Date(start); d.getTime() <= end.getTime(); d = new Date(d.getTime() + 86400000)) {
-      const day = d.getDate();
-      const monthNum = d.getMonth() + 1;
-      this.dateHeaders.push(`${day}/${monthNum}`);
+
+    let d = new Date(start);
+    d.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(end);
+    endDate.setHours(0, 0, 0, 0);
+
+    while (d <= endDate) {
+      this.dateHeaders.push(`${d.getDate()}/${d.getMonth() + 1}`);
+      d.setDate(d.getDate() + 1);
     }
   }
 
