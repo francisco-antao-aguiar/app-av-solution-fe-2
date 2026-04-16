@@ -119,6 +119,7 @@ export class WorkerService {
           workerId: worker.id,
           category: worker.category,
           name: worker.name,
+          projects: worker.projects,
           monday: 0,
           tuesday: 0,
           wednesday: 0,
@@ -196,6 +197,7 @@ export class WorkerService {
           dailyHours: new Array(dates.length).fill(null),
           totalHours: 0,
           totalSellPrice: 0,
+          projects: worker.projects,
         });
       }
 
@@ -233,6 +235,7 @@ export class WorkerService {
         totalBuyCost: totalBuyPrice,
         totalSellPrice: row.totalSellPrice,
         profit: row.totalSellPrice - totalBuyPrice,
+        projects: row.projects,
       };
     });
   }

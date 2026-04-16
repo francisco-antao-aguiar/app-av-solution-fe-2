@@ -3,33 +3,126 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WorkerService } from '../../core/services/worker.service';
 import { MonthlyProfitRow } from '../../core/models/worker.model';
-import { CsvExportService } from '../../core/services/csv-export.service';
+
+interface ProjectGroup {
+  name: string;
+  rows: MonthlyProfitRow[];
+  collapsed: boolean; // 👈 NEW
+}
 
 @Component({
   selector: 'app-monthly-profit',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './monthly-profit.component.html',
-  styleUrls: ['./monthly-profit.component.css'],
 })
 export class MonthlyProfitComponent implements OnInit {
   monthlyData: MonthlyProfitRow[] = [];
+  groupedData: ProjectGroup[] = [];
+
   loading = false;
   selectedMonth: string = '';
   startDate: string = '';
   endDate: string = '';
   dateHeaders: string[] = [];
-  sortColumn: string = '';
+
+  sortColumn: keyof MonthlyProfitRow | '' = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
   constructor(
     private workerService: WorkerService,
-    private cdr: ChangeDetectorRef, // <-- Inject ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
     this.setCurrentPeriod();
     this.loadData();
+  }
+
+  loadData(): void {
+    this.loading = true;
+    this.workerService.getMonthlyProfitData(this.startDate, this.endDate).subscribe({
+      next: (data) => {
+        this.monthlyData = data;
+        this.groupByProject();
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+      },
+    });
+  }
+
+  groupByProject(): void {
+    const map = new Map<string, MonthlyProfitRow[]>();
+
+    this.monthlyData.forEach((row) => {
+      const projects =
+        row.projects && row.projects.length > 0 ? row.projects : [{ project: 'Sem Projeto' }];
+
+      projects.forEach((p) => {
+        const projectName = p.project || 'Sem Projeto';
+
+        if (!map.has(projectName)) {
+          map.set(projectName, []);
+        }
+
+        map.get(projectName)!.push({ ...row });
+      });
+    });
+
+    this.groupedData = Array.from(map.entries()).map(([name, rows]) => ({
+      name,
+      rows,
+      collapsed: true, // 👈 default open
+    }));
+  }
+
+  toggleProject(project: ProjectGroup): void {
+    project.collapsed = !project.collapsed;
+  }
+
+  sort(column: keyof MonthlyProfitRow, project: ProjectGroup): void {
+    if (column === 'dailyHours') return;
+
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+
+    project.rows.sort((a, b) => {
+      const aVal = a[column];
+      const bVal = b[column];
+
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      return String(aVal).localeCompare(String(bVal));
+    });
+  }
+
+  getTotalHours(rows: MonthlyProfitRow[]): number {
+    return rows.reduce((sum, r) => sum + r.totalHours, 0);
+  }
+
+  getTotalBuyCost(rows: MonthlyProfitRow[]): number {
+    return rows.reduce((sum, r) => sum + r.totalBuyCost, 0);
+  }
+
+  getTotalSellPrice(rows: MonthlyProfitRow[]): number {
+    return rows.reduce((sum, r) => sum + r.totalSellPrice, 0);
+  }
+
+  getTotalProfit(rows: MonthlyProfitRow[]): number {
+    return rows.reduce((sum, r) => sum + r.profit, 0);
+  }
+
+  getDailyTotal(rows: MonthlyProfitRow[], index: number): number {
+    return rows.reduce((sum, r) => sum + (r.dailyHours[index] || 0), 0);
   }
 
   setCurrentPeriod(): void {
@@ -54,29 +147,20 @@ export class MonthlyProfitComponent implements OnInit {
     const start = new Date(year, month - 1, 26);
     const end = new Date(year, month, 25);
 
-    // format dates manually to avoid timezone/ISO issues
-    const startYear = start.getFullYear();
-    const startMonth = String(start.getMonth() + 1).padStart(2, '0');
-    const startDay = String(start.getDate()).padStart(2, '0');
-    this.startDate = `${startYear}-${startMonth}-${startDay}`;
-
-    const endYear = end.getFullYear();
-    const endMonth = String(end.getMonth() + 1).padStart(2, '0');
-    const endDay = String(end.getDate()).padStart(2, '0');
-    this.endDate = `${endYear}-${endMonth}-${endDay}`;
+    this.startDate = this.formatDateISO(start);
+    this.endDate = this.formatDateISO(end);
 
     this.dateHeaders = [];
-
     let d = new Date(start);
-    d.setHours(0, 0, 0, 0);
 
-    const endDate = new Date(end);
-    endDate.setHours(0, 0, 0, 0);
-
-    while (d <= endDate) {
+    while (d <= end) {
       this.dateHeaders.push(`${d.getDate()}/${d.getMonth() + 1}`);
       d.setDate(d.getDate() + 1);
     }
+  }
+
+  formatDateISO(date: Date): string {
+    return date.toISOString().split('T')[0];
   }
 
   onMonthChange(): void {
@@ -84,114 +168,35 @@ export class MonthlyProfitComponent implements OnInit {
     this.loadData();
   }
 
-  loadData(): void {
-    this.loading = true;
-    this.workerService.getMonthlyProfitData(this.startDate, this.endDate).subscribe({
-      next: (data) => {
-        this.monthlyData = data;
-        this.loading = false;
-        this.cdr.detectChanges(); // <-- ensure DOM updates after data fetch
-      },
-      error: (error) => {
-        console.error('Error loading monthly profit data:', error);
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  sort(column: keyof MonthlyProfitRow): void {
-    if (column === 'dailyHours') return;
-
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-
-    this.monthlyData.sort((a, b) => {
-      const aVal = a[column];
-      const bVal = b[column];
-
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-
-      const aStr = String(aVal);
-      const bStr = String(bVal);
-      return this.sortDirection === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
-    });
-  }
-
+  // ✅ CSV EXPORT (ADDED ONLY THIS)
   exportToCsv(): void {
-    const exportData = this.monthlyData.map((row) => {
-      const data: any = {
-        Category: row.category,
-        Name: row.name,
-        'Buy Price': row.buyPrice,
-        'Sell Price': row.sellPrice,
-      };
+    let csv = 'Projeto;Categoria;Nome;Compra;Venda;Horas;CompraTotal;VendaTotal;Lucro\n';
 
-      row.dailyHours.forEach((hours, index) => {
-        data[this.dateHeaders[index]] = hours === null ? '-' : hours;
+    this.groupedData.forEach((project) => {
+      project.rows.forEach((row) => {
+        csv +=
+          [
+            project.name,
+            row.category,
+            row.name,
+            row.buyPrice,
+            row.sellPrice,
+            row.totalHours,
+            row.totalBuyCost,
+            row.totalSellPrice,
+            row.profit,
+          ].join(';') + '\n';
       });
-
-      data['Total Hours'] = row.totalHours;
-      data['Total Buy Cost'] = row.totalBuyCost.toFixed(2);
-      data['Total Sell Price'] = row.totalSellPrice.toFixed(2);
-      data['Profit'] = row.profit.toFixed(2);
-
-      return data;
     });
 
-    CsvExportService.exportToCsv(
-      `monthly-profit-${this.startDate}-to-${this.endDate}.csv`,
-      exportData,
-    );
-  }
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
 
-  getPeriodDateRange(): string {
-    const start = new Date(this.startDate);
-    const end = new Date(this.endDate);
-    return `${this.formatDate(start)} - ${this.formatDate(end)}`;
-  }
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'monthly-profit.csv';
+    a.click();
 
-  private formatDate(date: Date): string {
-    const months = [
-      'Jan',
-      'Fev',
-      'Mar',
-      'Abril',
-      'Maio',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Set',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-  }
-
-  getTotalHours(): number {
-    return this.monthlyData.reduce((sum, row) => sum + row.totalHours, 0);
-  }
-
-  getTotalBuyCost(): number {
-    return this.monthlyData.reduce((sum, row) => sum + row.totalBuyCost, 0);
-  }
-
-  getTotalSellPrice(): number {
-    return this.monthlyData.reduce((sum, row) => sum + row.totalSellPrice, 0);
-  }
-
-  getTotalProfit(): number {
-    return this.monthlyData.reduce((sum, row) => sum + row.profit, 0);
-  }
-
-  getDailyTotal(dayIndex: number): number {
-    return this.monthlyData.reduce((sum, row) => sum + (row.dailyHours[dayIndex] || 0), 0);
+    window.URL.revokeObjectURL(url);
   }
 }

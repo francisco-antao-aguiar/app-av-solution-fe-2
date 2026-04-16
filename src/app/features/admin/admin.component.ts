@@ -24,6 +24,7 @@ export class AdminComponent implements OnInit {
   successMessage = '';
   errorMessage = '';
   weekDays: WeekDay[] = [];
+  projectsInputValue: string = '';
 
   constructor(
     private formBuilder: FormBuilder,
@@ -37,6 +38,7 @@ export class AdminComponent implements OnInit {
       name: ['', Validators.required],
       buyPrice: ['', [Validators.required, Validators.min(0)]],
       sellPrice: ['', [Validators.required, Validators.min(0)]],
+      projects: [[], Validators.required],
     });
 
     this.hoursForm = this.formBuilder.group({
@@ -52,6 +54,20 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
     this.loadWorkers();
     this.setCurrentWeek();
+  }
+
+  onProjectsInput(event: any): void {
+    const value = event.target.value;
+
+    this.projectsInputValue = value;
+
+    const projects = value
+      .split(',')
+      .map((p: string) => p.trim())
+      .filter((p: string) => p.length > 0)
+      .map((p: string) => ({ project: p }));
+
+    this.workerForm.patchValue({ projects });
   }
 
   toggleWorkerForm(): void {
@@ -85,12 +101,19 @@ export class AdminComponent implements OnInit {
   editWorker(worker: Worker): void {
     this.editingWorkerId = worker.id;
     this.showWorkerForm = true;
+
+    const projectsString = worker.projects?.map((p) => p.project).join(', ');
+
     this.workerForm.patchValue({
       category: worker.category,
       name: worker.name,
       buyPrice: worker.buyPrice,
       sellPrice: worker.sellPrice,
+      projects: worker.projects, // keep this for submit
     });
+
+    this.projectsInputValue = projectsString;
+
     this.cdr.detectChanges();
   }
 
@@ -193,9 +216,16 @@ export class AdminComponent implements OnInit {
     this.workersHoursArray.clear();
     this.workers.forEach((worker) => {
       const workerHours = existingHours.filter((h) => h.worker.id === worker.id);
-      const group: any = { workerId: [worker.id] };
+      const group: any = {
+        workerId: [worker.id],
+        project: [null, Validators.required],
+      };
       this.weekDays.forEach((day, dayIndex) => {
-        const utcDate = new Date(Date.UTC(day.date.getFullYear(), day.date.getMonth(), day.date.getDate())).toISOString().split('T')[0];
+        const utcDate = new Date(
+          Date.UTC(day.date.getFullYear(), day.date.getMonth(), day.date.getDate()),
+        )
+          .toISOString()
+          .split('T')[0];
         const dayHour = workerHours.find((h) => h.date === utcDate);
         group[`day${dayIndex}`] = [
           dayHour ? dayHour.hours : 0,
@@ -287,9 +317,17 @@ export class AdminComponent implements OnInit {
         return this.weekDays
           .map((day, dayIndex) => {
             const hours = Number(workerHours[`day${dayIndex}`]);
+            const project = workerHours.project; // 👈 NEW
             if (hours == null || hours == undefined || hours < 0) return null;
-            const utcDate = new Date(Date.UTC(day.date.getFullYear(), day.date.getMonth(), day.date.getDate()));
-            return { date: utcDate.toISOString().split('T')[0], hours, worker: { id: workerId } };
+            const utcDate = new Date(
+              Date.UTC(day.date.getFullYear(), day.date.getMonth(), day.date.getDate()),
+            );
+            return {
+              date: utcDate.toISOString().split('T')[0],
+              hours,
+              project,
+              worker: { id: workerId },
+            };
           })
           .filter(Boolean);
       },
@@ -306,8 +344,20 @@ export class AdminComponent implements OnInit {
 
   private loadWeeklyHours(): void {
     if (!this.weekDays.length || !this.workers.length) return;
-    const startUtcDate = new Date(Date.UTC(this.weekDays[0].date.getFullYear(), this.weekDays[0].date.getMonth(), this.weekDays[0].date.getDate()));
-    const endUtcDate = new Date(Date.UTC(this.weekDays[6].date.getFullYear(), this.weekDays[6].date.getMonth(), this.weekDays[6].date.getDate()));
+    const startUtcDate = new Date(
+      Date.UTC(
+        this.weekDays[0].date.getFullYear(),
+        this.weekDays[0].date.getMonth(),
+        this.weekDays[0].date.getDate(),
+      ),
+    );
+    const endUtcDate = new Date(
+      Date.UTC(
+        this.weekDays[6].date.getFullYear(),
+        this.weekDays[6].date.getMonth(),
+        this.weekDays[6].date.getDate(),
+      ),
+    );
     const startDate = startUtcDate.toISOString().split('T')[0];
     const endDate = endUtcDate.toISOString().split('T')[0];
 

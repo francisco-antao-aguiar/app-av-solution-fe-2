@@ -1,9 +1,14 @@
+export interface WorkerProject {
+  project: string;
+}
+
 export interface Worker {
   id: string;
   category: string;
   name: string;
   buyPrice: number;
   sellPrice: number;
+  projects: WorkerProject[];
 }
 
 export interface WorkingHours {
@@ -25,6 +30,7 @@ export interface WeeklyHoursRow {
   saturday: number;
   sunday: number;
   totalHours: number;
+  projects: [WorkerProject];
 }
 
 export interface MonthlyBuyRow {
@@ -35,6 +41,7 @@ export interface MonthlyBuyRow {
   dailyHours: (number | null)[];
   totalHours: number;
   totalSellPrice: number;
+  projects: [WorkerProject];
 }
 
 export interface MonthlyProfitRow {
@@ -48,6 +55,7 @@ export interface MonthlyProfitRow {
   totalBuyCost: number;
   totalSellPrice: number;
   profit: number;
+  projects: [WorkerProject];
 }
 export interface WeekDay {
   name: string;
